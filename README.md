@@ -6,11 +6,11 @@
 
 ## 🧠 Game Logic
 - The game board is a 3x3 grid.
-- You play as **❌ X**, and the computer plays as **⭕ O**.
+- You play as **❌**, and the computer plays as **⭕**.
 - Turns alternate between the player and the computer.
 - The game detects winning conditions in rows, columns, and diagonals.
 - Upon a win or draw, a result is displayed and the board is frozen until the "Reset" button is pressed.
-- The computer uses a **basic strategy** to block or win (not minimax).
+- The computer uses a **basic strategy** to block or win.
 ---
 
 ## 🛠️ Tech Stack
