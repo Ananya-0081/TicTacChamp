@@ -1,97 +1,143 @@
-console.log("Welcome to tic tac toe");
+// ✅ FINAL: 1 Player vs Computer (Random AI) with Sound, Image on Win, and Sound/Text on Draw
+
+console.log("Welcome to Tic Tac Toe");
 
 let turn = "X";
 let gameover = false;
-let audio = new Audio("audio.mp3");
-let win = new Audio("win.wav");
-let draw = new Audio("draw.wav");
-let c = 0;
+let moveCount = 0;
 
-// Switch between X and O
-const changeTurn = () => {
-    return turn === "X" ? "O" : "X";
-};
+let audio = new Audio("audio.mp3"); // click sound
+let winSound = new Audio("win.wav"); // win sound
+let drawSound = new Audio("draw.wav"); // draw sound
 
-// Check for a win
+const changeTurn = () => (turn === "X" ? "O" : "X");
+
 const checkWin = () => {
     let boxtext = document.getElementsByClassName("boxtext");
     let wins = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
     ];
 
-    wins.forEach(e => {
+    for (let e of wins) {
         if (
             boxtext[e[0]].innerText === boxtext[e[1]].innerText &&
-            boxtext[e[2]].innerText === boxtext[e[1]].innerText &&
+            boxtext[e[1]].innerText === boxtext[e[2]].innerText &&
             boxtext[e[0]].innerText !== ""
         ) {
-            document.querySelector(".info").innerText = boxtext[e[0]].innerText + " Won!";
+            document.querySelector(".info").innerText = boxtext[e[0]].innerText + " Won";
             gameover = true;
 
-            // Highlight the winning cells
-            e.forEach(index => {
-                boxtext[index].parentElement.classList.add("winning-cell");
+            e.forEach(i => {
+                boxtext[i].parentElement.classList.add("winning-cell");
             });
 
-            // Show celebration image
-            let img = document.querySelector(".imgbox img");
-            img.style.width = "300px";
-
-            win.play();
+            document.querySelector(".imgbox img").style.width = "300px";
+            winSound.play();
+            return true;
         }
-    });
+    }
+    return false;
 };
 
-// Game logic
+const checkDraw = () => {
+    if (moveCount === 9 && !gameover) {
+        document.querySelector(".info").innerText = "It's a draw! Try again";
+        drawSound.play();
+        gameover = true;
+    }
+};
+
+const computerMove = () => {
+    if (gameover) return;
+
+    let boxtext = document.getElementsByClassName("boxtext");
+    let emptyIndices = [];
+    for (let i = 0; i < boxtext.length; i++) {
+        if (boxtext[i].innerText === "") {
+            emptyIndices.push(i);
+        }
+    }
+
+    const tryToWinOrBlock = (player) => {
+        let wins = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+        for (let line of wins) {
+            let [a, b, c] = line;
+            let vals = [boxtext[a].innerText, boxtext[b].innerText, boxtext[c].innerText];
+            let filled = vals.filter(v => v === player).length;
+            let emptyIndex = [a, b, c].find(i => boxtext[i].innerText === "");
+
+            if (filled === 2 && emptyIndex !== undefined) return emptyIndex;
+        }
+        return null;
+    };
+
+    // Try to win
+    let winMove = tryToWinOrBlock("O");
+    if (winMove !== null) {
+        boxtext[winMove].innerText = "O";
+    } else {
+        // Try to block X
+        let blockMove = tryToWinOrBlock("X");
+        if (blockMove !== null) {
+            boxtext[blockMove].innerText = "O";
+        } else {
+            // Else random
+            let randIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+            boxtext[randIndex].innerText = "O";
+        }
+    }
+
+    audio.currentTime = 0;
+    audio.play();
+    moveCount++;
+
+    if (!checkWin()) {
+        checkDraw();
+        if (!gameover) {
+            turn = "X";
+            document.querySelector(".info").innerText = "Turn for " + turn;
+        }
+    }
+};
+
 let boxes = document.getElementsByClassName("box");
 Array.from(boxes).forEach(element => {
     let boxtext = element.querySelector(".boxtext");
-
     element.addEventListener("click", () => {
-        if (boxtext.innerText === "" && !gameover) {
-            boxtext.innerText = turn;
-            boxtext.classList.add(turn.toLowerCase()); // Add glow class: 'x' or 'o'
+        if (boxtext.innerText === "" && !gameover && turn === "X") {
+            boxtext.innerText = "X";
             audio.currentTime = 0;
             audio.play();
-            c++;
+            moveCount++;
 
-            checkWin();
-
-            if (!gameover) {
-                if (c === 9) {
-                    document.querySelector(".info").innerText = "It's a draw! Try again";
-                    draw.play();
-                    gameover = true;
-                } else {
-                    turn = changeTurn();
+            if (!checkWin()) {
+                checkDraw();
+                if (!gameover) {
+                    turn = "O";
                     document.querySelector(".info").innerText = "Turn for " + turn;
+                    setTimeout(computerMove, 400);
                 }
             }
         }
     });
 });
 
-// Reset game
-reset.addEventListener("click", () => {
+document.getElementById("reset").addEventListener("click", () => {
     let boxtexts = document.querySelectorAll(".boxtext");
-    boxtexts.forEach(element => {
+    Array.from(boxtexts).forEach(element => {
         element.innerText = "";
-        element.classList.remove("x", "o");
         element.parentElement.classList.remove("winning-cell");
     });
 
     turn = "X";
-    c = 0;
+    moveCount = 0;
     gameover = false;
     document.querySelector(".info").innerText = "Turn for " + turn;
-
-    let img = document.querySelector(".imgbox img");
-    img.style.width = "0px";
+    document.querySelector(".imgbox img").style.width = "0px";
 });
